@@ -1,4 +1,5 @@
 package com.yorku.equipment;
+
 public class Equipment implements Cloneable {
 
     private String id;
@@ -12,11 +13,12 @@ public class Equipment implements Cloneable {
         this.location = location;
     }
 
+    @Override
     public Equipment clone() {
         try {
             return (Equipment) super.clone();
-        } catch(CloneNotSupportedException e) {
-            return null;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException("Clone failed");
         }
     }
 
@@ -30,5 +32,13 @@ public class Equipment implements Cloneable {
 
     public String getId() {
         return id;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getLocation() {
+        return location;
     }
 }
