@@ -46,13 +46,32 @@ public class LoginScreen {
 
         loginBtn.setOnAction(e -> {
             try {
-                String type = userType.getValue();
+               String type = userType.getValue();
+                String email = emailField.getText();
+                String password = passwordField.getText();
+                String id = idField.getText();
+
+                // 1️⃣ Check that email is entered
+                if (email == null || email.trim().isEmpty()) {
+                    new Alert(Alert.AlertType.ERROR, "Email is required").show();
+                    return;
+                }
+                if (password == null || password.trim().isEmpty()) {
+                    new Alert(Alert.AlertType.ERROR, "password is required").show();
+                    return;
+                }
+                if (id == null || id.trim().isEmpty()) {
+                    new Alert(Alert.AlertType.ERROR, "id is required").show();
+                    return;
+                }
+
+                // 2️⃣ Check that user type is selected
                 if (type == null) {
                     new Alert(Alert.AlertType.ERROR, "Select a user type").show();
                     return;
                 }
 
-                if (type.equals("head coordinator")) {
+                if (type.equals("head coordinator") && email.equals("Alice@yorku.ca")) {
                     HeadCoordinatorApprovalScreen approvalScreen =
                             new HeadCoordinatorApprovalScreen(stage, HeadLabCoordinator.getInstance(),this);
                     approvalScreen.show();
