@@ -1,4 +1,5 @@
 package com.yorku.coordinator;
+
 public class HeadLabCoordinator {
 
     private static HeadLabCoordinator instance;
@@ -6,15 +7,16 @@ public class HeadLabCoordinator {
     private HeadLabCoordinator() {}
 
     public static HeadLabCoordinator getInstance() {
-
-        if(instance == null) {
+        if (instance == null) {
             instance = new HeadLabCoordinator();
         }
-
         return instance;
     }
 
-    public void generateLabManager(String name) {
+    // Generate a lab manager
+    public LabManager generateLabManager(String name) {
+        LabManager manager = new LabManager(name);
         System.out.println("Lab manager account created for: " + name);
+        return manager;
     }
 }

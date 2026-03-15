@@ -1,5 +1,6 @@
 package com.yorku.gui;
 
+import com.yorku.coordinator.LabManager;
 import com.yorku.users.User;
 import com.yorku.users.UserFactory;
 
@@ -16,9 +17,11 @@ import javafx.stage.Stage;
 public class LoginScreen {
 
     private Stage stage;
+    private LabManager labManager; // reference to the system LabManager
 
-    public LoginScreen(Stage stage) {
+    public LoginScreen(Stage stage, LabManager labManager) {
         this.stage = stage;
+        this.labManager = labManager;
     }
 
     public void show() {
@@ -31,35 +34,49 @@ public class LoginScreen {
         PasswordField passwordField = new PasswordField();
         passwordField.setPromptText("Password");
 
+        TextField idField = new TextField();
+        idField.setPromptText("Student/Staff ID or Certification");
+
         ComboBox<String> userType = new ComboBox<>();
-        userType.getItems().addAll("student", "faculty", "researcher", "guest");
+        userType.getItems().addAll("student", "faculty", "researcher", "guest", "lab_manager");
         userType.setPromptText("Select User Type");
 
         Button loginBtn = new Button("Login");
 
         loginBtn.setOnAction(e -> {
-
             try {
+                String type = userType.getValue();
+                if (type == null) {
+                    new Alert(Alert.AlertType.ERROR, "Select a user type").show();
+                    return;
+                }
 
-                User user = UserFactory.createUser(
-                        userType.getValue(),
-                        emailField.getText(),
-                        passwordField.getText(),
-                        "ID001"
-                );
-
-                ReservationScreen reservation = new ReservationScreen(stage, user);
-                reservation.show();
+                if (type.equals("lab_manager")) {
+                    // Lab Manager logs in → open LabManagerScreen
+                    LabManagerScreen labScreen = new LabManagerScreen(stage, labManager);
+                    labScreen.show();
+                } else {
+                    // Normal user logs in → open ReservationScreen
+                    User user = UserFactory.createUser(
+                            type,
+                            emailField.getText(),
+                            passwordField.getText(),
+                            idField.getText()
+                    );
+                    ReservationScreen reservation = new ReservationScreen(stage, user, labManager);
+                    reservation.show();
+                }
 
             } catch (Exception ex) {
-                new Alert(Alert.AlertType.ERROR, "Invalid login").show();
+                new Alert(Alert.AlertType.ERROR, "Invalid login or missing information").show();
             }
         });
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(title, emailField, passwordField, userType, loginBtn);
+        layout.getChildren().addAll(title, emailField, passwordField, idField, userType, loginBtn);
+        layout.setStyle("-fx-padding: 15;");
 
-        stage.setScene(new Scene(layout, 400, 250));
+        stage.setScene(new Scene(layout, 400, 300));
         stage.setTitle("Login");
         stage.show();
     }

@@ -1,8 +1,7 @@
 package com.yorku.gui;
 
 import com.yorku.booking.BookingFacade;
-import com.yorku.command.Command;
-import com.yorku.command.ReserveCommand;
+import com.yorku.coordinator.LabManager;
 import com.yorku.equipment.Equipment;
 import com.yorku.users.User;
 
@@ -19,97 +18,64 @@ public class ReservationScreen {
 
     private Stage stage;
     private User user;
+    private LabManager labManager;
 
-    public ReservationScreen(Stage stage, User user) {
+    public ReservationScreen(Stage stage, User user, LabManager labManager) {
         this.stage = stage;
         this.user = user;
+        this.labManager = labManager;
     }
 
     public void show() {
-
         Label title = new Label("Reserve Equipment");
-        Label cancel = new Label("cancel Equipment usage");
-        Label extend = new Label("extend Equipment time");
 
         ComboBox<String> equipmentList = new ComboBox<>();
-        equipmentList.getItems().addAll(
-                "Microscope",
-                "Spectrometer",
-                "3D Printer"
-        );
+        refreshEquipmentList(equipmentList);
 
         TextField hoursField = new TextField();
         hoursField.setPromptText("Hours");
 
         Button reserveBtn = new Button("Reserve");
-        Button cancelBtn = new Button("Cancel");
-        Button extendBtn = new Button("Extend");
 
         reserveBtn.setOnAction(e -> {
-
-            try {
-
-                Equipment equipment = new Equipment(
-                        "EQ001",
-                        equipmentList.getValue(),
-                        "Lab A"
-                );
-
-                String hoursText = hoursField.getText();
-                if (hoursText == null || hoursText.isEmpty()) {
-                    new Alert(Alert.AlertType.ERROR,"Please enter number of hours").show();
-                    return;
-                }
-
-                int hours;
-                try {
-                    hours = Integer.parseInt(hoursText);
-                } catch (NumberFormatException ex) {
-                    new Alert(Alert.AlertType.ERROR,"Invalid number of hours").show();
-                    return;
-                }
-
-                BookingFacade booking = new BookingFacade();
-                Command reserveCommand = new ReserveCommand(booking, user, equipment, hours);
-                reserveCommand.execute();
-                
-
-                new Alert(Alert.AlertType.INFORMATION,
-                        "Reservation successful!"
-                ).show();
-
-            } catch (Exception ex) {
-
-                new Alert(Alert.AlertType.ERROR,
-                        "Reservation failed"
-                ).show();
+            String selected = equipmentList.getValue();
+            if (selected == null) {
+                new Alert(Alert.AlertType.ERROR, "Select equipment").show();
+                return;
             }
-        });
-        cancelBtn.setOnAction(e -> {
+
+            String id = selected.split(" - ")[0];
+            Equipment equipment = labManager.getEquipment(id);
+
+            int hours;
             try {
-
-            } catch (Exception ex) {
-
-                new Alert(Alert.AlertType.ERROR,
-                        "cancel Reservation failed"
-                ).show();
+                hours = Integer.parseInt(hoursField.getText());
+            } catch (NumberFormatException ex) {
+                new Alert(Alert.AlertType.ERROR, "Invalid hours").show();
+                return;
             }
-        });
 
-        extendBtn.setOnAction(e -> {
-            try {
+            BookingFacade booking = new BookingFacade();
+            booking.reserveEquipment(user, equipment, hours);
 
-            } catch (Exception ex) {
+            new Alert(Alert.AlertType.INFORMATION, "Reservation successful!").show();
 
-                new Alert(Alert.AlertType.ERROR,
-                        "cancel Reservation failed"
-                ).show();
-            }
+            // Refresh after reservation
+            refreshEquipmentList(equipmentList);
         });
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(title,cancel,extend,cancelBtn,extendBtn, equipmentList, hoursField, reserveBtn);
+        layout.getChildren().addAll(title, equipmentList, hoursField, reserveBtn);
+        layout.setStyle("-fx-padding: 15;");
 
         stage.setScene(new Scene(layout, 400, 250));
+        stage.show();
+    }
+
+    private void refreshEquipmentList(ComboBox<String> comboBox) {
+        comboBox.getItems().clear();
+        for (Equipment eq : labManager.getAvailableEquipment()) {
+            comboBox.getItems().add(eq.getId() + " - " + eq.getDescription());
+        }
     }
 }

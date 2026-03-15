@@ -13,12 +13,13 @@ public class Equipment implements Cloneable {
         this.location = location;
     }
 
+    // Prototype: clone
     @Override
     public Equipment clone() {
         try {
             return (Equipment) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException("Clone failed");
+        } catch(CloneNotSupportedException e) {
+            return null;
         }
     }
 
@@ -30,15 +31,10 @@ public class Equipment implements Cloneable {
         this.available = status;
     }
 
-    public String getId() {
-        return id;
-    }
+    public String getId() { return id; }
+    public String getDescription() { return description; }
+    public void setDescription(String desc) { this.description = desc; }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public String getLocation() {
-        return location;
-    }
+    public String getLocation() { return location; }
+    public void setLocation(String loc) { this.location = loc; }
 }
