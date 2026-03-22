@@ -19,13 +19,15 @@ public class ReservationScreen {
     private Stage stage;
     private User user;
     private LabManager labManager;
-    private LoginScreen loginScreen; // reference for back button
+    private LoginScreen loginScreen;
+    private BookingFacade bookingFacade;
 
     public ReservationScreen(Stage stage, User user, LabManager labManager, LoginScreen loginScreen) {
         this.stage = stage;
         this.user = user;
         this.labManager = labManager;
         this.loginScreen = loginScreen;
+        this.bookingFacade = new BookingFacade(); // single instance
     }
 
     public void show() {
@@ -33,11 +35,7 @@ public class ReservationScreen {
         Label title = new Label("Reserve Equipment");
 
         ComboBox<String> equipmentList = new ComboBox<>();
-        for (Equipment eq : labManager.getAvailableEquipment()) {
-            if (eq.isAvailable()) {
-                equipmentList.getItems().add(eq.getId() + " - " + eq.getDescription());
-            }
-        }
+        refreshEquipmentList(equipmentList);
 
         TextField hoursField = new TextField();
         hoursField.setPromptText("Hours");
@@ -45,75 +43,83 @@ public class ReservationScreen {
         Button reserveBtn = new Button("Reserve");
         Button cancelBtn = new Button("Cancel Booking");
         Button extendBtn = new Button("Extend Booking");
+        Button backBtn = new Button("Back");
 
+        // --- Reserve Equipment ---
         reserveBtn.setOnAction(e -> {
-        try {
-        String selected = equipmentList.getValue();
-        if (selected == null) {
-            new Alert(Alert.AlertType.ERROR, "Select equipment").show();
-            return;
-        }
+            Equipment eq = getSelectedEquipment(equipmentList);
+            if (eq == null) return;
 
-        String eqId = selected.split(" - ")[0];          // Extract ID
-        Equipment eq = labManager.getEquipmentById(eqId); // Get object
-
-        int hours = Integer.parseInt(hoursField.getText());
-
-        BookingFacade booking = new BookingFacade();
-        booking.reserveEquipment(user, eq, hours);
-
-        new Alert(Alert.AlertType.INFORMATION, "Reservation successful!").show();
-
-    } catch (Exception ex) {
-        new Alert(Alert.AlertType.ERROR, "Reservation failed").show();
-    }
-        cancelBtn.setOnAction(eh ->{
-            String selected = equipmentList.getValue();
-            if (selected == null) {
-                new Alert(Alert.AlertType.ERROR, "Select equipment").show();
-                return;
+            try {
+                int hours = Integer.parseInt(hoursField.getText());
+                bookingFacade.reserveEquipment(user, eq, hours);
+                new Alert(Alert.AlertType.INFORMATION, "Reservation successful!").show();
+                refreshEquipmentList(equipmentList);
+            } catch (NumberFormatException ex) {
+                new Alert(Alert.AlertType.ERROR, "Enter a valid number of hours").show();
+            } catch (Exception ex) {
+                new Alert(Alert.AlertType.ERROR, "Reservation failed").show();
             }
-
-            String eqId = selected.split(" - ")[0];
-            Equipment eq = labManager.getEquipmentById(eqId);
-
-            BookingFacade booking = new BookingFacade();
-            booking.cancelReservation(user, eq); // assumes you implement cancelReservation in BookingFacade
-
-            new Alert(Alert.AlertType.INFORMATION, "Booking canceled!").show();
         });
 
-        extendBtn.setOnAction(es -> {
-            String selected = equipmentList.getValue();
-            if (selected == null) {
-                new Alert(Alert.AlertType.ERROR, "Select equipment").show();
-                return;
-            }
+        // --- Cancel Booking ---
+        cancelBtn.setOnAction(e -> {
+            Equipment eq = getSelectedEquipment(equipmentList);
+            if (eq == null) return;
 
-            String eqId = selected.split(" - ")[0];
-            Equipment eq = labManager.getEquipmentById(eqId);
+            try {
+                bookingFacade.cancelReservation(user, eq);
+                new Alert(Alert.AlertType.INFORMATION, "Booking canceled!").show();
+                refreshEquipmentList(equipmentList);
+            } catch (Exception ex) {
+                new Alert(Alert.AlertType.ERROR, "Cancellation failed").show();
+            }
+        });
+
+        // --- Extend Booking ---
+        extendBtn.setOnAction(e -> {
+            Equipment eq = getSelectedEquipment(equipmentList);
+            if (eq == null) return;
 
             try {
                 int extraHours = Integer.parseInt(hoursField.getText());
-                BookingFacade booking = new BookingFacade();
-                booking.extendReservation(user, eq, extraHours); // implement extendReservation in BookingFacade
-
+                bookingFacade.extendReservation(user, eq, extraHours);
                 new Alert(Alert.AlertType.INFORMATION, "Booking extended!").show();
+                refreshEquipmentList(equipmentList);
             } catch (NumberFormatException ex) {
                 new Alert(Alert.AlertType.ERROR, "Enter valid number of hours").show();
+            } catch (Exception ex) {
+                new Alert(Alert.AlertType.ERROR, "Extension failed").show();
             }
         });
 
-
-});
-
-        Button backBtn = new Button("Back");
+        // --- Back Button ---
         backBtn.setOnAction(e -> loginScreen.show());
 
-        VBox layout = new VBox(10, title, equipmentList, hoursField, reserveBtn, backBtn);
+        VBox layout = new VBox(10, title, equipmentList, hoursField, reserveBtn, cancelBtn, extendBtn, backBtn);
         layout.setStyle("-fx-padding: 15;");
 
         stage.setScene(new Scene(layout, 400, 300));
         stage.show();
+    }
+
+    // --- Helper to refresh equipment list ---
+    private void refreshEquipmentList(ComboBox<String> equipmentList) {
+        equipmentList.getItems().clear();
+        for (Equipment eq : labManager.getAvailableEquipment()) {
+            String status = eq.isAvailable() ? "Available" : "Booked";
+            equipmentList.getItems().add(eq.getId() + " - " + eq.getDescription() + " [" + status + "]");
+        }
+    }
+
+    // --- Helper to get the selected Equipment object ---
+    private Equipment getSelectedEquipment(ComboBox<String> equipmentList) {
+        String selected = equipmentList.getValue();
+        if (selected == null) {
+            new Alert(Alert.AlertType.ERROR, "Select equipment").show();
+            return null;
+        }
+        String eqId = selected.split(" - ")[0];
+        return labManager.getEquipmentById(eqId);
     }
 }
