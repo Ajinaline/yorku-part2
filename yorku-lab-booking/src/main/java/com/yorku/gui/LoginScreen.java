@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.yorku.coordinator.HeadLabCoordinator;
 import com.yorku.coordinator.LabManager;
+import com.yorku.users.PasswordValidator;
 import com.yorku.users.User;
 import com.yorku.users.UserFactory;
 
@@ -119,6 +120,10 @@ public class LoginScreen {
 
                 } else {
                     User user = UserFactory.createUser(type, email, password, id);
+                    if (!PasswordValidator.isStrong(password)) {
+                        showError("Password does not meet strength requirements");
+                        return;
+                    }
                     ReservationScreen reservation = new ReservationScreen(stage, user, labManager, this);
                     reservation.show();
                 }
@@ -136,4 +141,8 @@ public class LoginScreen {
         stage.setTitle("Login");
         stage.show();
     }
+
+    private void showError(String message) {
+    new Alert(Alert.AlertType.ERROR, message).show();
+}
 }
