@@ -16,7 +16,7 @@ public class LabManager {
     private Map<String, Equipment> equipmentMap = new HashMap<>();
 
     public LabManager(String name) {
-        this.name = name;
+        this.email = name;
         loadEquipmentFromCSV();
     }
 

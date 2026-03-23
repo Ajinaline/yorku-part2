@@ -24,7 +24,7 @@ public class HeadLabCoordinator {
     // Generate LabManager
     public LabManager generateLabManager(String name, String email, String password, String id) {
     // Only Head Coordinator calls this method
-    LabManager lm = new LabManager(email, password, id);
+    LabManager lm = new LabManager(email);
     System.out.println("Lab Manager created by Head Coordinator: " + email);
     return lm;
 }   
