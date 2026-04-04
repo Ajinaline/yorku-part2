@@ -8,8 +8,10 @@ import java.util.List;
 
 import com.yorku.coordinator.HeadLabCoordinator;
 import com.yorku.coordinator.LabManager;
+import com.yorku.users.PasswordValidator;
 import com.yorku.users.User;
 import com.yorku.users.UserFactory;
+import com.yorku.users.UserRegistry;
 
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -83,50 +85,95 @@ public class LoginScreen {
 
         Button loginBtn = new Button("Login");
         loginBtn.setOnAction(e -> {
-            try {
-                String type = userType.getValue();
-                String email = emailField.getText();
-                String password = passwordField.getText();
-                String id = idField.getText();
+    try {
+        String type = userType.getValue();
+        String email = emailField.getText();
+        String password = passwordField.getText();
+        String id = idField.getText();
 
-                // Validation
-                if (email == null || email.trim().isEmpty()) {
-                    new Alert(Alert.AlertType.ERROR, "Email is required").show();
-                    return;
-                }
-                if (password == null || password.trim().isEmpty()) {
-                    new Alert(Alert.AlertType.ERROR, "Password is required").show();
-                    return;
-                }
-                if (id == null || id.trim().isEmpty()) {
-                    new Alert(Alert.AlertType.ERROR, "ID is required").show();
-                    return;
-                }
-                if (type == null) {
-                    new Alert(Alert.AlertType.ERROR, "Select a user type").show();
-                    return;
-                }
+        // ----------- BASIC VALIDATION -----------
+        if (email == null || email.trim().isEmpty()) {
+            showError("Email is required");
+            return;
+        }
+        if (password == null || password.trim().isEmpty()) {
+            showError("Password is required");
+            return;
+        }
+        if (id == null || id.trim().isEmpty()) {
+            showError("ID is required");
+            return;
+        }
+        if (type == null) {
+            showError("Select a user type");
+            return;
+        }
 
-                // Login handling
-                if (type.equals("head coordinator") && email.equals("Alice@yorku.ca")) {
-                    HeadCoordinatorApprovalScreen approvalScreen =
-                            new HeadCoordinatorApprovalScreen(stage, HeadLabCoordinator.getInstance(), this);
-                    approvalScreen.show();
-
-                } else if (type.equals("lab_manager")) {
-                    LabManagerScreen labScreen = new LabManagerScreen(stage, labManager, this);
-                    labScreen.show();
-
-                } else {
-                    User user = UserFactory.createUser(type, email, password, id);
-                    ReservationScreen reservation = new ReservationScreen(stage, user, labManager, this);
-                    reservation.show();
-                }
-
-            } catch (Exception ex) {
-                new Alert(Alert.AlertType.ERROR, "Invalid login or missing information").show();
+        // ----------- HEAD COORDINATOR LOGIN -----------
+        if (type.equals("head coordinator")) {
+            if (!email.equals("Alice@yorku.ca")) {
+                showError("Unauthorized Head Coordinator");
+                return;
             }
-        });
+            HeadCoordinatorApprovalScreen approvalScreen =
+                new HeadCoordinatorApprovalScreen(stage, HeadLabCoordinator.getInstance(), this);
+            approvalScreen.show();
+            return;
+        }
+
+        // ----------- LAB MANAGER LOGIN -----------
+        if (type.equals("lab_manager")) {
+            // Only the LabManager instance created by Head Coordinator can log in
+            if (labManager == null) {
+                showError("No Lab Manager account exists. Only Head Coordinator can create one.");
+                return;
+            }
+
+            if (!labManager.getEmail().equals(email) || !labManager.getPassword().equals(password)) {
+                showError("Incorrect Lab Manager credentials");
+                return;
+            }
+
+            LabManagerScreen labScreen = new LabManagerScreen(stage, labManager, this);
+            labScreen.show();
+            return;
+        }
+
+
+        // ----------- CHECK IF USER EXISTS -----------
+        UserRegistry registry = UserRegistry.getInstance();
+        User user = registry.getUserByEmail(email);
+
+        if (user == null) {
+            // ----------- CREATE NEW USER IF NOT FOUND -----------
+            if (!PasswordValidator.isValid(password)) {
+                showError("Password must contain uppercase, lowercase, number, and symbol.");
+                return;
+            }
+
+            user = UserFactory.createUser(type, email, password, id);
+            try {
+                HeadLabCoordinator.getInstance().registerUser(user);
+            } catch (Exception ex) {
+                showError(ex.getMessage());
+                return;
+            }
+        }
+
+        // ----------- CHECK APPROVAL STATUS -----------
+        if (user.getStatus() == User.Status.PENDING_APPROVAL) {
+            showError("Your account is pending approval by Head Coordinator.");
+            return;
+        }
+
+        // ----------- SUCCESS → RESERVATION SCREEN -----------
+        ReservationScreen reservation = new ReservationScreen(stage, user, labManager, this);
+        reservation.show();
+
+    } catch (Exception ex) {
+        showError("Invalid login or missing information");
+    }
+});
 
         VBox layout = new VBox(10);
         layout.getChildren().addAll(title, emailField, passwordField, idField, userType, sampleUsers, loginBtn);
@@ -136,4 +183,8 @@ public class LoginScreen {
         stage.setTitle("Login");
         stage.show();
     }
+
+    private void showError(String message) {
+    new Alert(Alert.AlertType.ERROR, message).show();
+}
 }

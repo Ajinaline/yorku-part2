@@ -20,12 +20,14 @@ public class HeadLabCoordinator {
         }
         return instance;
     }
-
+    
     // Generate LabManager
-    public LabManager generateLabManager(String name) {
-        System.out.println("Lab manager account created for: " + name);
-        return new LabManager(name);
-    }
+    public LabManager generateLabManager(String name, String email, String password, String id) {
+    // Only Head Coordinator calls this method
+    LabManager lm = new LabManager(email);
+    System.out.println("Lab Manager created by Head Coordinator: " + email);
+    return lm;
+}   
 
     // Register a user (adds to registry and handles pending approval)
     public boolean registerUser(User user) throws Exception {
@@ -37,7 +39,7 @@ public class HeadLabCoordinator {
         }
 
         // Validate strong password
-        if (!PasswordValidator.isStrong(user.getPassword())) {
+        if (!PasswordValidator.isValid(user.getPassword())) {
             throw new Exception("Weak password. Must include uppercase, lowercase, number, symbol.");
         }
 
@@ -79,4 +81,6 @@ public class HeadLabCoordinator {
     public List<User> getPendingApprovals() {
         return new ArrayList<>(pendingApprovals);
     }
+
+    
 }
