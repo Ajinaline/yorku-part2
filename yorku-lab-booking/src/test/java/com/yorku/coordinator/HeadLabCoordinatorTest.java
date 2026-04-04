@@ -15,12 +15,12 @@ public class HeadLabCoordinatorTest {
         head = HeadLabCoordinator.getInstance();
     }
 
-    @Test
-    void testGenerateLabManager() {
-        LabManager manager = head.generateLabManager("Alice");
-        assertNotNull(manager);
-        assertEquals("Alice", manager.getName());
-    }
+ @Test
+void testGenerateLabManager() {
+    LabManager manager = head.generateLabManager("Alice", "123", "alice@yorku.ca", "555-5555");
+    assertNotNull(manager);
+    assertEquals("Alice", manager.getName());
+}
 
     @Test
     void testRegisterValidStudent() throws Exception {
