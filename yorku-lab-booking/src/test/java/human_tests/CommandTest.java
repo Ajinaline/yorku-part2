@@ -1,9 +1,9 @@
+package human_tests;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
 import com.yorku.command.Command;
-
 
 public class CommandTest {
 
