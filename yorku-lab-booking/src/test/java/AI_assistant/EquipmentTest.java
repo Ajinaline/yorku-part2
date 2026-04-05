@@ -1,11 +1,14 @@
 package AI_assistant;
 
-import com.yorku.equipment.Equipment;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.yorku.equipment.Equipment;
 
-public class EquipmentAITest {
+public class EquipmentTest {
 
     @Test
     void testSetDescriptionCorrectness() {

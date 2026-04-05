@@ -1,7 +1,14 @@
 package human_tests;
 
+import com.yorku.users.Faculty;
+import com.yorku.users.Guest;
+import com.yorku.users.Researcher;
+import com.yorku.users.Student;
+import com.yorku.users.User;
+import com.yorku.users.UserFactory;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class UserFactoryTest {
 
